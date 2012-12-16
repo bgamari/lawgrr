@@ -1,4 +1,4 @@
-name:              logger
+name:              lawgrr
 version:           0.0.0
 cabal-version:     >= 1.8
 build-type:        Simple
@@ -71,14 +71,14 @@ library
                  , data-default
                  , aeson
 
-executable         logger
+executable         lawgrr
     if flag(library-only)
         Buildable: False
 
     main-is:           main.hs
     hs-source-dirs:    app
     build-depends:     base
-                     , logger
+                     , lawgrr
                      , yesod-default
 
     ghc-options:       -threaded -O2
@@ -90,7 +90,7 @@ test-suite test
     ghc-options:       -Wall
 
     build-depends: base
-                 , logger
+                 , lawgrr
                  , yesod-test >= 0.3 && < 0.4
                  , yesod-default
                  , yesod-core
