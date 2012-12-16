@@ -6,20 +6,21 @@ var parseDate = d3.time.format.utc("%Y-%m-%dT%H:%M:%S.%LZ").parse;
 
 var newTimeseries = function(container) {
     var svg = d3.select(container).append("svg")
-        .attr("width", width)
-        .attr("height", height)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var x = d3.time.scale()
-        .range([0, width]);
+        .range([0, width])
 
     var y = d3.scale.linear()
         .range([height, 0]);
 
     var xAxis = d3.svg.axis()
         .scale(x)
-        .orient("bottom");
+        .orient("bottom")
+        .tickSubdivide(10);
 
     var yAxis = d3.svg.axis()
         .scale(y)
@@ -29,7 +30,6 @@ var newTimeseries = function(container) {
         .x(function(d) { return x(d.time); })
         .y(function(d) { return y(d.value); });
 
-
     var updatePlot = function(data, textStatus, jqXHR) {
         data.points.forEach(function(d) {
             d.time = parseDate(d.time);
@@ -37,12 +37,14 @@ var newTimeseries = function(container) {
         points = data.points;
 
         x.domain(d3.extent(points, function(d) { return d.time; }));
+        x.ticks(d3.time.minutes, 15);
         y.domain(d3.extent(points, function(d) { return d.value; }));
 
         svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
+            .call(xAxis)
+            .text("Time");
 
         svg.append("g")
             .attr("class", "y axis")
@@ -51,7 +53,8 @@ var newTimeseries = function(container) {
             .attr("transform", "rotate(-90)")
             .attr("y", 6)
             .attr("dy", ".71em")
-            .style("text-anchor", "end");
+            .style("text-anchor", "end")
+            .text(data.units);
 
         svg.append("path")
             .datum(points)
