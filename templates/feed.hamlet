@@ -1,0 +1,18 @@
+<h1>#{feedName feed}
+
+<div #plot-container>
+
+<ul>
+    <li>Units: #{feedUnits feed}
+
+<script>
+    var go = function() {
+        jQuery.ajax("@{FeedPointsR feedId}",
+                                   { data: "value="+$("#value")[0].valueAsNumber
+                                   , type: "POST"
+                                   });
+    };
+
+<input #value type=number>
+<button type=button onclick="go();">
+

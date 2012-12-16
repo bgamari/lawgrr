@@ -1,0 +1,20 @@
+Default: &defaults
+  database: logger.sqlite3
+  poolsize: 10
+
+Development:
+  <<: *defaults
+
+Testing:
+  database: logger_test.sqlite3
+  <<: *defaults
+
+Staging:
+  database: logger_staging.sqlite3
+  poolsize: 100
+  <<: *defaults
+
+Production:
+  database: logger_production.sqlite3
+  poolsize: 100
+  <<: *defaults

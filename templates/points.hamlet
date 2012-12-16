@@ -1,0 +1,11 @@
+<table>
+    <thead>
+        <tr>
+            <th>Time
+            <th>Value
+    <tbody>
+        $forall p <- points
+            <tr>
+                <td>dataPointTime p
+                <td>dataPointValue p
+            

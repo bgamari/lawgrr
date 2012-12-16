@@ -1,0 +1,13 @@
+/static StaticR Static getStatic
+/auth   AuthR   Auth   getAuth
+
+/favicon.ico FaviconR GET
+/robots.txt RobotsR GET
+
+/ HomeR GET POST
+/feeds FeedsR GET
+/feeds/!add FeedAddR GET POST
+/feeds/!delete FeedDeleteR POST
+/feeds/#FeedId FeedR GET POST
+/feeds/#FeedId/points FeedPointsR GET POST
+/feeds/#FeedId/edit FeedEditR GET POST
