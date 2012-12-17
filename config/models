@@ -15,6 +15,7 @@ Feed
 ApiKey
     feedId FeedId Eq
     key Text
+    UniqueApiKey feedId key
 DataPoint
     time UTCTime
     feedId FeedId Eq

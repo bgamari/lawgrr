@@ -39,13 +39,10 @@ postFeedAddR = do
             getFeedR feedId
         otherwise -> defaultLayout [whamlet|Done|]
 
-postFeedDeleteR :: Handler RepHtml
-postFeedDeleteR = do
-    defaultLayout [whamlet|Done|]
-
 getFeedR :: FeedId -> Handler RepHtml
 getFeedR feedId = do
     feed <- runDB $ get404 feedId
+    apiKeys <- runDB $ selectList [ ApiKeyFeedId ==. feedId ] []
     defaultLayout $ do
         aDomId <- lift newIdent
         setTitle $ toHtml $ "Feed: "<>Import.feedName feed
@@ -53,29 +50,10 @@ getFeedR feedId = do
         addScript $ StaticR js_jquery_js
         $(widgetFile "feed")
 
-getFeedEditR :: FeedId -> Handler RepHtml
-getFeedEditR feedId = do
-    feed <- runDB $ get404 feedId
-    defaultLayout $ do
-        aDomId <- lift newIdent
-        setTitle $ toHtml $ "Edit Feed: "<>Import.feedName feed
-        $(widgetFile "feed")
-
-postFeedEditR :: FeedId -> Handler RepHtml
-postFeedEditR feedId = do
-    feed <- runDB $ get404 feedId
-    defaultLayout $ do
-        aDomId <- lift newIdent
-        setTitle $ toHtml $ "Edit Feed: "<>Import.feedName feed
-        $(widgetFile "feed")
-
-postFeedR :: FeedId -> Handler RepHtml
-postFeedR feedId = do
-    feed <- runDB $ get404 feedId
-    defaultLayout $ do
-        aDomId <- lift newIdent
-        setTitle "Welcome To Yesod!"
-        $(widgetFile "feed")
+deleteFeedR :: FeedId -> Handler RepHtml
+deleteFeedR feedId = do
+    runDB $ get404 feedId >> delete feedId
+    defaultLayout [whamlet|done|]
 
 postFeedPointsR :: FeedId -> Handler ()
 postFeedPointsR feedId = do
@@ -83,12 +61,12 @@ postFeedPointsR feedId = do
     key <- lookupPostParams "X-APIKey"
     feedKeys <- runDB $ selectList [ApiKeyFeedId ==. feedId] []
     case key of
-        --[key] | key `elem` map (apiKeyKey . entityVal) feedKeys -> do
-        otherwise -> do
+        [key] | key `elem` map (apiKeyKey . entityVal) feedKeys -> do
+        --otherwise -> do
             time <- liftIO $ getCurrentTime
             value <- lookupPostParams "value"
             case value of
-                [] -> error "No value given"
+                [] -> invalidArgs ["Value not given"]
                 [value] | Just value' <- readMay (T.unpack value) -> do
                     pointId <- runDB $ insert
                                $ DataPoint { dataPointFeedId = feedId
@@ -96,7 +74,7 @@ postFeedPointsR feedId = do
                                            , dataPointValue = value'
                                            }
                     return ()
-        otherwise -> error "asdf"
+        otherwise -> notFound
     
 getFeedPointsR :: FeedId -> Handler RepJson
 getFeedPointsR feedId = do
@@ -110,4 +88,4 @@ getFeedPointsR feedId = do
                       , "points" .= map (pointToObj . entityVal) points
                       ]
     jsonToRepJson json 
-
+ 

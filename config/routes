@@ -7,7 +7,7 @@
 / HomeR GET POST
 /feeds FeedsR GET
 /feeds/!add FeedAddR GET POST
-/feeds/!delete FeedDeleteR POST
-/feeds/#FeedId FeedR GET POST
+/feeds/#FeedId FeedR GET DELETE
 /feeds/#FeedId/points FeedPointsR GET POST
-/feeds/#FeedId/edit FeedEditR GET POST
+/feeds/#FeedId/keys FeedKeysR POST
+/feeds/#FeedId/keys/#ApiKeyKey FeedKeyR DELETE

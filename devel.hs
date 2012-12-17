@@ -1,5 +1,5 @@
 {-# LANGUAGE PackageImports #-}
-import "logger" Application (getApplicationDev)
+import "lawgrr" Application (getApplicationDev)
 import Network.Wai.Handler.Warp
     (runSettings, defaultSettings, settingsPort)
 import Control.Concurrent (forkIO)
