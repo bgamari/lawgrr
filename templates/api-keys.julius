@@ -1,11 +1,10 @@
 function newApiKey() {
     var onSuccess = function(data, textStatus, xhr) {
-        var key = data.key;
-        $("#add-api-key").before("<li id='key-'"+key+"'>"+key+"</li>");
+        $(".keys").replaceWith(data);
     };
     jQuery.ajax("@{FeedKeysR feedId}", { type: "POST"
                                        , success: onSuccess
-                                       , dataType: "json"
+                                       , dataType: "html"
                                        });
 }
 

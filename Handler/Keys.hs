@@ -17,8 +17,8 @@ postFeedKeysR feedId = do
     key <- liftIO $ (\x->T.pack $ showHex x "")
                  <$> getRandomNByteInteger 16
     runDB $ insert $ ApiKey feedId key
-    let widget = do setTitle "New key"
-                    [whamlet|<p>Your new key is #{key}|]
+    apiKeys <- runDB $ selectList [ ApiKeyFeedId ==. feedId ] []
+    let widget = apiKeysWidget feedId (map entityVal apiKeys)
         json = object [ "key" .= key ]
     defaultLayoutJson widget json
 
