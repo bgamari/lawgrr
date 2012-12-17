@@ -1,12 +1,14 @@
 {-# LANGUAGE TupleSections, OverloadedStrings #-}
 module Handler.Feed where
 
-import Control.Error
-import Data.Time.Clock
-import Database.Persist
-import Import
-import Yesod.Form.Functions
-import qualified Data.Text as T       
+import           Control.Error
+import qualified Data.Text as T
+import           Data.Time.Clock
+import           Database.Persist
+import           Import
+import           Yesod.Form.Functions
+
+import           Handler.Keys
 
 getFeedsR :: Handler RepHtml
 getFeedsR = do
@@ -49,6 +51,12 @@ getFeedR feedId = do
         addScript $ StaticR js_d3_js
         addScript $ StaticR js_jquery_js
         $(widgetFile "feed")
+        [whamlet|
+<div>
+    <h2>
+        Keys
+        ^{apiKeysWidget feedId (map entityVal apiKeys)}
+|]
 
 deleteFeedR :: FeedId -> Handler RepHtml
 deleteFeedR feedId = do
@@ -58,11 +66,10 @@ deleteFeedR feedId = do
 postFeedPointsR :: FeedId -> Handler ()
 postFeedPointsR feedId = do
     feed <- runDB $ get404 feedId
-    key <- lookupPostParams "X-APIKey"
+    key <- lookupPostParams "key"
     feedKeys <- runDB $ selectList [ApiKeyFeedId ==. feedId] []
     case key of
         [key] | key `elem` map (apiKeyKey . entityVal) feedKeys -> do
-        --otherwise -> do
             time <- liftIO $ getCurrentTime
             value <- lookupPostParams "value"
             case value of
@@ -74,7 +81,7 @@ postFeedPointsR feedId = do
                                            , dataPointValue = value'
                                            }
                     return ()
-        otherwise -> notFound
+        otherwise -> permissionDenied "Need API key to submit data points"
     
 getFeedPointsR :: FeedId -> Handler RepJson
 getFeedPointsR feedId = do

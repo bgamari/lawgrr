@@ -1,0 +1,19 @@
+function newApiKey() {
+    var onSuccess = function(data, textStatus, xhr) {
+        var key = data.key;
+        $("#add-api-key").before("<li id='key-'"+key+"'>"+key+"</li>");
+    };
+    jQuery.ajax("@{FeedKeysR feedId}", { type: "POST"
+                                       , success: onSuccess
+                                       , dataType: "json"
+                                       });
+}
+
+function deleteApiKey(key) {
+    var el = $("key-"+key),
+        url = el["data-key"];
+    var onSuccess = function(data, textStatus, xhr) {
+        $("#key-"+key).remove();
+    };
+    jQuery.ajax("@{FeedKeysR feedId}/"+key, { type: "DELETE", success: onSuccess });
+}

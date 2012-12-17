@@ -15,16 +15,3 @@
 
 <input #value type=number>
 <button type=button onclick="go();">
-
-<div>
-    <h2>Keys
-    <ul class=keys>
-        $forall Entity _ apiKey <- apiKeys
-            $with key <- apiKeyKey apiKey
-                <li id="key-#{key}">
-                    #{key}
-                    <button type=button onclick="deleteApiKey('#{key}');">
-
-        <li #add-api-key>
-            <button type=button onclick="newApiKey();">New key
-

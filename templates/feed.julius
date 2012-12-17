@@ -4,51 +4,47 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50},
 
 var parseDate = d3.time.format.utc("%Y-%m-%dT%H:%M:%S.%LZ").parse;
 
-var newTimeseries = function(container) {
-    var svg = d3.select(container).append("svg")
+function Timeseries(container) {
+    this.svg = d3.select(container).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var x = d3.time.scale()
+    this.x = d3.time.scale()
         .range([0, width])
 
-    var y = d3.scale.linear()
+    this.y = d3.scale.linear()
         .range([height, 0]);
 
-    var xAxis = d3.svg.axis()
-        .scale(x)
+    this.xAxis = d3.svg.axis()
+        .scale(this.x)
         .orient("bottom")
         .tickSubdivide(10);
 
-    var yAxis = d3.svg.axis()
-        .scale(y)
+    this.yAxis = d3.svg.axis()
+        .scale(this.y)
         .orient("left");
 
-    var line = d3.svg.line()
-        .x(function(d) { return x(d.time); })
-        .y(function(d) { return y(d.value); });
-
-    var updatePlot = function(data, textStatus, jqXHR) {
+    this.updatePlot = function(data, textStatus, jqXHR) {
         data.points.forEach(function(d) {
             d.time = parseDate(d.time);
         });
-        points = data.points;
+        var points = data.points;
 
-        x.domain(d3.extent(points, function(d) { return d.time; }));
-        x.ticks(d3.time.minutes, 15);
-        y.domain(d3.extent(points, function(d) { return d.value; }));
+        this.x.domain(d3.extent(points, function(d) { return d.time; }));
+        this.x.ticks(d3.time.minutes, 15);
+        this.y.domain(d3.extent(points, function(d) { return d.value; }));
 
-        svg.append("g")
+        this.svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
-            .call(xAxis)
+            .call(this.xAxis)
             .text("Time");
 
-        svg.append("g")
+        this.svg.append("g")
             .attr("class", "y axis")
-            .call(yAxis)
+            .call(this.yAxis)
             .append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", 6)
@@ -56,30 +52,23 @@ var newTimeseries = function(container) {
             .style("text-anchor", "end")
             .text(data.units);
 
-        svg.append("path")
+        var x = this.x, y = this.y;
+        var line = d3.svg.line()
+            .x(function(d) { return x(d.time); })
+            .y(function(d) { return y(d.value); });
+
+        this.svg.append("path")
             .datum(points)
             .attr("class", "line")
             .attr("d", line);
     };
-    jQuery.ajax("@{FeedPointsR feedId}", { dataType: "json", success: updatePlot });
+
+    this.fetchAndUpdate = function() {
+        jQuery.ajax("@{FeedPointsR feedId}", { dataType: "json", success: this.updatePlot, context: this });
+    };
 }
 
-newTimeseries("#plot-container");
-window.setInterval(10000, timeseries.update());
+timeseries = new Timeseries("#plot-container");
+timeseries.fetchAndUpdate();
+window.setInterval(10000, timeseries.fetchAndUpdate);
 
-function newApiKey() {
-    var onSuccess = function(data, textStatus, xhr) {
-        var key = data.key;
-        $("#add-api-key").before("<li id='key-'"+key+"'>"+key+"</li>");
-    };
-    jQuery.ajax("@{FeedKeysR feedId}", { type: "POST"
-                                       , success: onSuccess
-                                       , dataType: "json"
-                                       });
-}
-function deleteApiKey(key) {
-    var onSuccess = function(data, textStatus, xhr) {
-        $("#key-"+key).remove();
-    };
-    jQuery.ajax("@{FeedKeysR feedId}/"+key, { type: "DELETE", success: onSuccess });
-}

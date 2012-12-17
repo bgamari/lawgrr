@@ -1,0 +1,9 @@
+<ul class=keys>
+    $forall apiKey <- apiKeys
+        $with key <- apiKeyKey apiKey
+            <li id="key-#{key}" data-key=@{FeedKeyR feedId key}>
+                #{key}
+                <button type=button onclick="deleteApiKey('#{key}');">
+
+    <li #add-api-key>
+        <button type=button onclick="newApiKey();">New key
