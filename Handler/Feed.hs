@@ -4,8 +4,10 @@ module Handler.Feed where
 import           Control.Error
 import qualified Data.Text as T
 import           Data.Time.Clock
+import           Data.Time.Format
 import           Database.Persist
-import           Import
+import           Import hiding (parseTime)
+import           System.Locale
 import           Yesod.Form.Functions
 
 import           Handler.Keys
@@ -83,16 +85,39 @@ postFeedPointsR feedId = do
                     return ()
         otherwise -> permissionDenied "Need API key to submit data points"
     
+parseParam :: Read a => Text -> Text -> (String -> Maybe a) -> Handler a
+parseParam err p read = do
+    p' <- lookupGetParams p
+    case p' of
+        []  -> invalidArgs ["Missing "<>p]
+        a:_ -> maybe (invalidArgs [err]) return $ read $ T.unpack a
+
+parseDateParam :: Text -> Text -> Handler UTCTime
+parseDateParam err p = do               
+    parseParam err p (parseTime defaultTimeLocale fmt)
+    where fmt = iso8601DateFormat (Just "%H:%M:%S%Q%Z")
+
 getFeedPointsR :: FeedId -> Handler RepJson
 getFeedPointsR feedId = do
     feed <- runDB $ get404 feedId
-    points <- runDB $ selectList [DataPointFeedId ==. feedId] []
+    period <- parseParam "Couldn't parse period" "period" readMay :: Handler Double
+    start <- parseDateParam "Couldn't parse start" "start"
+    end <- parseDateParam "Couldn't parse end" "end"
+    let q = [ DataPointFeedId ==. feedId
+            , DataPointTime >=. start
+            , DataPointTime <=. end
+            ]
+    let decimate [] = []
+        decimate (p:rest) =
+            let diff = realToFrac $ secondsToDiffTime $ round $ period/1000
+            in p:decimate (dropWhile (\p'->dataPointTime p' < (diff `addUTCTime` dataPointTime p)) rest)
+    points <- (decimate . map entityVal) <$> runDB (selectList q [])
     let pointToObj p = object [ "time" .= dataPointTime p
                               , "value" .= dataPointValue p
                               ]
         json = object [ "name" .= feedName feed
                       , "units" .= feedUnits feed
-                      , "points" .= map (pointToObj . entityVal) points
+                      , "points" .= map pointToObj points
                       ]
     jsonToRepJson json 
  

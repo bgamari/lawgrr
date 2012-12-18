@@ -5,16 +5,13 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50},
 var parseDate = d3.time.format.utc("%Y-%m-%dT%H:%M:%S.%LZ").parse;
 
 function Timeseries(container) {
-    this.svg = d3.select(container).append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+    this.end = new Date();
+    
     this.x = d3.time.scale()
-        .range([0, width])
+        .range([0, width]);
 
     this.y = d3.scale.linear()
+        .domain([0, 100])
         .range([height, 0]);
 
     this.xAxis = d3.svg.axis()
@@ -25,6 +22,16 @@ function Timeseries(container) {
     this.yAxis = d3.svg.axis()
         .scale(this.y)
         .orient("left");
+
+    this.svg = d3.select(container).append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .call(d3.behavior.zoom().x(this.x).y(this.y).on("zoom", function() {
+            this.svg.select(".x.axis").call(this.xAxis);
+            this.svg.select(".y.axis").call(this.yAxis);
+        }));
 
     this.updatePlot = function(data, textStatus, jqXHR) {
         data.points.forEach(function(d) {
@@ -45,7 +52,7 @@ function Timeseries(container) {
         this.svg.append("g")
             .attr("class", "y axis")
             .call(this.yAxis)
-            .append("text")
+          .append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", 6)
             .attr("dy", ".71em")
@@ -64,7 +71,18 @@ function Timeseries(container) {
     };
 
     this.fetchAndUpdate = function() {
-        jQuery.ajax("@{FeedPointsR feedId}", { dataType: "json", success: this.updatePlot, context: this });
+        var range = d3.time.month,
+            period = (range.offset(new Date(0), 1) - new Date(0)) / 1000;
+        jQuery.ajax("@{FeedPointsR feedId}", {
+            dataType: "json",
+            success: this.updatePlot,
+            context: this,
+            data: {
+                period: period,
+                start: range.offset(this.end, -1).toISOString(),
+                end: this.end.toISOString(),
+            },
+        });
     };
 }
 

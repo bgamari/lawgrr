@@ -44,6 +44,7 @@ library
 
     build-depends: base                          >= 4          && < 5
                  , time                          >= 1.4
+                 , old-locale
                  -- , yesod-platform                >= 1.1        && < 1.2
                  , errors                        >= 1.0
                  , yesod                         >= 1.1.4      && < 1.2
