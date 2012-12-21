@@ -13,21 +13,44 @@ import           Control.Monad ((>=>))
 import           Handler.Keys
 import           Data.Time.Format.Human (humanReadableTime)
 
-feedLastUpdate :: FeedId -> Handler (Maybe UTCTime)
+feedLastUpdate :: FeedId -> Handler (Maybe (UTCTime, Double))
 feedLastUpdate feedId =
-    (fmap (dataPointTime . entityVal) . listToMaybe)
+    (fmap (\val->(dataPointTime val, dataPointValue val)) . fmap (entityVal) . listToMaybe)
     <$> runDB (selectList [ DataPointFeedId ==. feedId ] [ Desc DataPointTime, LimitTo 1 ])
 
-humanFeedLastUpdate :: FeedId -> Handler (Maybe String)
-humanFeedLastUpdate =
-    feedLastUpdate >=> maybe (return Nothing) (\t->Just <$> liftIO (humanReadableTime t))
+humanFeedLastUpdate :: FeedId -> Handler (Maybe (String, Double))
+humanFeedLastUpdate feedId = do
+    last <- feedLastUpdate feedId
+    case last of
+        Nothing -> return Nothing 
+        Just (time, value) -> do time' <- liftIO $ humanReadableTime time
+                                 return $ Just (time', value)
 
 getFeedsR :: Handler RepHtml
 getFeedsR = do
     feeds <- runDB $ selectList [] []
+    (widget, enctype) <- generateFormPost feedForm
+    lastUpdates <- mapM (humanFeedLastUpdate . entityKey) feeds
     defaultLayout $ do
         setTitle "Feeds"
         $(widgetFile "feeds")
+        $(widgetFile "add-feed")
+
+requirePostParam :: Text -> Handler Text
+requirePostParam param =
+    lookupPostParam param >>= maybe (invalidArgs $ ["Missing parameter "<>param]) return
+
+postFeedsR :: Handler ()
+postFeedsR = do
+    name <- requirePostParam "name"
+    description <- requirePostParam "description"
+    units <- requirePostParam "units"
+    pointId <- runDB $ insert
+               $ Feed { feedName = name
+                      , feedDescription = toHtml description
+                      , feedUnits = units
+                      }
+    return ()
 
 feedForm :: Form Feed
 feedForm = renderDivs $ Feed
@@ -62,7 +85,6 @@ getFeedR feedId = do
         aDomId <- lift newIdent
         setTitle $ toHtml $ "Feed: "<>Import.feedName feed
         addScript $ StaticR js_d3_js
-        addScript $ StaticR js_jquery_js
         $(widgetFile "feed")
         [whamlet|
 <div>

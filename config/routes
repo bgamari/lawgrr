@@ -5,7 +5,7 @@
 /robots.txt RobotsR GET
 
 / HomeR GET POST
-/feeds FeedsR GET
+/feeds FeedsR GET POST
 /feeds/!add FeedAddR GET POST
 /feeds/#FeedId FeedR GET DELETE
 /feeds/#FeedId/points FeedPointsR GET POST

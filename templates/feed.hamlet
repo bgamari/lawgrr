@@ -3,8 +3,9 @@
 <a href="@{FeedsR}">Back to feeds
 
 <p><strong>
-  $maybe updateTime <- lastUpdate
-    This feed was last updated #{updateTime}
+  $maybe (time,value) <- lastUpdate
+    This feed was last updated #{time} when it was
+    <span>#{value}
   $nothing
     This feed has never been updated
 
@@ -24,4 +25,5 @@
 
 <h3>Manually add a value
 <input #value type=number>
-<button type=button onclick="go();" class="btn btn-primary">add
+<button type=button onclick="go();" .btn .btn-primary>add
+

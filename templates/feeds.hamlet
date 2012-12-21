@@ -3,11 +3,16 @@
 <p><strong>These are the feeds I know about,
 
 <ul #feeds>
-  $forall Entity key feed <- feeds
-    <li>
-      <h2 .feed-name><a href=@{FeedR key}>#{feedName feed}
-      <h3>
-        Last updated at
-        <time>
-      <div .plot>
+  $forall (lastUpdated, entity) <- zip lastUpdates feeds
+    $with Entity key feed <- entity
+      <li>
+        <h2 .feed-name>
+          <a href=@{FeedR key}>#{feedName feed}
+        <h3>
+          $maybe (time,value) <- lastUpdated
+              Last updated <time>#{time}
+          $nothing
+              Has never been updated
+
+        <div .plot>
 

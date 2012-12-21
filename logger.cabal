@@ -74,6 +74,7 @@ library
                  , aeson
                  , random-source
                  , friendly-time
+                 , containers
 
 executable         lawgrr
     if flag(library-only)
@@ -86,6 +87,7 @@ executable         lawgrr
                      , yesod-default
 
     ghc-options:       -threaded -O2
+    ld-options:        -static -pthread
 
 test-suite test
     type:              exitcode-stdio-1.0

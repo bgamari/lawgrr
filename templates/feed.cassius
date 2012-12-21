@@ -1,13 +1,17 @@
 .axis path, .axis line
-    fill: none
-    stroke: #000
-    shape-rendering: crispEdges
+  fill: none
+  stroke: #000
+  shape-rendering: crispEdges
 
 .x.axis path
-    display: none
+  display: none
 
 .line
-    fill: none
-    stroke: steelblue
-    stroke-width: 0.2em
+  fill: none
+  stroke: steelblue
+  stroke-width: 0.2em
 
+#plot-container
+  border: 1px
+  border-radius: 20em
+  
