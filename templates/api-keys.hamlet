@@ -5,7 +5,7 @@
     $with key <- apiKeyKey apiKey
       <li .key id="key-#{key}" data-key=@{FeedKeyR feedId key}>
         #{key}
-        <button type=button onclick="deleteApiKey('#{key}');" .btn .btn-danger .btn-small>delete
+        <button type=button onclick="deleteApiKey('#{key}');" .btn .btn-danger .btn-mini>delete
 
   <li #add-api-key>
-    <button type=button onclick="newApiKey();" .btn .btn-primary .btn-small>new key
+    <button type=button onclick="newApiKey();" .btn .btn-primary .btn-mini>new key

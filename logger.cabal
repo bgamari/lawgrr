@@ -73,6 +73,7 @@ library
                  , data-default
                  , aeson
                  , random-source
+                 , friendly-time
 
 executable         lawgrr
     if flag(library-only)

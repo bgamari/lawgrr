@@ -9,8 +9,18 @@ import           Database.Persist
 import           Import hiding (parseTime)
 import           System.Locale
 import           Yesod.Form.Functions
-
+import           Control.Monad ((>=>))
 import           Handler.Keys
+import           Data.Time.Format.Human (humanReadableTime)
+
+feedLastUpdate :: FeedId -> Handler (Maybe UTCTime)
+feedLastUpdate feedId =
+    (fmap (dataPointTime . entityVal) . listToMaybe)
+    <$> runDB (selectList [ DataPointFeedId ==. feedId ] [ Desc DataPointTime, LimitTo 1 ])
+
+humanFeedLastUpdate :: FeedId -> Handler (Maybe String)
+humanFeedLastUpdate =
+    feedLastUpdate >=> maybe (return Nothing) (\t->Just <$> liftIO (humanReadableTime t))
 
 getFeedsR :: Handler RepHtml
 getFeedsR = do
@@ -46,6 +56,7 @@ postFeedAddR = do
 getFeedR :: FeedId -> Handler RepHtml
 getFeedR feedId = do
     feed <- runDB $ get404 feedId
+    lastUpdate <- humanFeedLastUpdate feedId
     apiKeys <- runDB $ selectList [ ApiKeyFeedId ==. feedId ] []
     defaultLayout $ do
         aDomId <- lift newIdent

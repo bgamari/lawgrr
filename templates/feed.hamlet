@@ -2,11 +2,17 @@
     <a href="@{FeedR feedId}">#{feedName feed}
 <a href="@{FeedsR}">Back to feeds
 
+<p><strong>
+  $maybe updateTime <- lastUpdate
+    This feed was last updated #{updateTime}
+  $nothing
+    This feed has never been updated
+
 <p><strong>Here is the history of this feed
 
 <div #plot-container>
 
-Measured in #{feedUnits feed}
+<p><strong>Measured in #{feedUnits feed}
 
 <script>
     function go() {
@@ -16,5 +22,6 @@ Measured in #{feedUnits feed}
                                    });
     };
 
+<h3>Manually add a value
 <input #value type=number>
 <button type=button onclick="go();" class="btn btn-primary">add
