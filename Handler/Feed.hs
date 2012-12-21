@@ -1,17 +1,22 @@
 {-# LANGUAGE TupleSections, OverloadedStrings #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 module Handler.Feed where
 
 import           Control.Error
+import           Control.Monad ((>=>))
 import qualified Data.Text as T
 import           Data.Time.Clock
 import           Data.Time.Format
+import           Data.Time.Format.Human (humanReadableTime)
 import           Database.Persist
+import           Handler.Keys
 import           Import hiding (parseTime)
+import           RepCsv
+import qualified Data.Csv as Csv
 import           System.Locale
 import           Yesod.Form.Functions
-import           Control.Monad ((>=>))
-import           Handler.Keys
-import           Data.Time.Format.Human (humanReadableTime)
+import qualified Data.Vector as V
+import           Data.Text.Encoding (encodeUtf8)
 
 feedLastUpdate :: FeedId -> Handler (Maybe (UTCTime, Double))
 feedLastUpdate feedId =
@@ -130,7 +135,12 @@ parseDateParam err p = do
     parseParam err p (parseTime defaultTimeLocale fmt)
     where fmt = iso8601DateFormat (Just "%H:%M:%S%Q%Z")
 
-getFeedPointsR :: FeedId -> Handler RepJson
+encodeDate :: UTCTime -> Text
+encodeDate =
+    T.pack . formatTime defaultTimeLocale fmt
+    where fmt = iso8601DateFormat (Just "%H:%M:%S%Q%Z")
+
+getFeedPointsR :: FeedId -> Handler RepJsonCsv
 getFeedPointsR feedId = do
     feed <- runDB $ get404 feedId
     period <- parseParam "Couldn't parse period" "period" readMay :: Handler Double
@@ -152,5 +162,25 @@ getFeedPointsR feedId = do
                       , "units" .= feedUnits feed
                       , "points" .= map pointToObj points
                       ]
-    jsonToRepJson json 
- 
+        csvHeader = V.fromList
+                    $ map encodeUtf8 --[ "time", feedName feed<>" ("<>feedUnits feed<>")" ]
+                      [ "time", "value"]
+        csv = V.fromList points
+    csvJson json csvHeader csv
+
+instance Csv.ToNamedRecord DataPoint where
+    toNamedRecord p = Csv.namedRecord
+        [ "time" Csv..= encodeDate (dataPointTime p)
+        , "value" Csv..= dataPointValue p
+        ]
+
+data RepJsonCsv = RepJsonCsv RepJson RepCsv
+instance HasReps RepJsonCsv where
+    chooseRep (RepJsonCsv (RepJson j) (RepCsv c)) =
+        chooseRep [ (typeCsv, c), (typeJson, j) ]
+
+csvJson json csvHeader csv = do
+    json' <- jsonToRepJson json
+    csv' <- csvToRepCsv csvHeader csv
+    return $ RepJsonCsv json' csv'
+
