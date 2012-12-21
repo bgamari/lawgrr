@@ -1,5 +1,13 @@
 <h1>Feeds
 
-<ul>
-    $forall Entity key feed <- feeds
-        <li><a href=@{FeedR key}>#{feedName feed}
+<p><strong>These are the feeds I know about,
+
+<ul #feeds>
+  $forall Entity key feed <- feeds
+    <li>
+      <h2 .feed-name><a href=@{FeedR key}>#{feedName feed}
+      <h3>
+        Last updated at
+        <time>
+      <div .plot>
+

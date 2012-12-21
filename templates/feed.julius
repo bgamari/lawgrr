@@ -6,6 +6,7 @@ var parseDate = d3.time.format.utc("%Y-%m-%dT%H:%M:%S.%LZ").parse;
 
 function Timeseries(container) {
     this.end = new Date();
+    this.range = d3.time.month;
     
     this.x = d3.time.scale()
         .range([0, width]);
@@ -39,7 +40,8 @@ function Timeseries(container) {
         });
         var points = data.points;
 
-        this.x.domain(d3.extent(points, function(d) { return d.time; }));
+        var start = this.range.offset(this.end, -1);
+        this.x.domain([start, this.end]);
         this.x.ticks(d3.time.minutes, 15);
         this.y.domain(d3.extent(points, function(d) { return d.value; }));
 
@@ -71,15 +73,14 @@ function Timeseries(container) {
     };
 
     this.fetchAndUpdate = function() {
-        var range = d3.time.month,
-            period = (range.offset(new Date(0), 1) - new Date(0)) / 1000;
+        var period = (this.range.offset(new Date(0), 1) - new Date(0)) / 1000;
         jQuery.ajax("@{FeedPointsR feedId}", {
             dataType: "json",
             success: this.updatePlot,
             context: this,
             data: {
                 period: period,
-                start: range.offset(this.end, -1).toISOString(),
+                start: this.range.offset(this.end, -1).toISOString(),
                 end: this.end.toISOString(),
             },
         });

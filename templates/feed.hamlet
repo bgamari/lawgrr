@@ -1,9 +1,12 @@
-<h1>#{feedName feed}
+<h1 class="feed-name">
+    <a href="@{FeedR feedId}">#{feedName feed}
+<a href="@{FeedsR}">Back to feeds
+
+<p><strong>Here is the history of this feed
 
 <div #plot-container>
 
-<ul>
-    <li>Units: #{feedUnits feed}
+Measured in #{feedUnits feed}
 
 <script>
     function go() {
@@ -14,4 +17,4 @@
     };
 
 <input #value type=number>
-<button type=button onclick="go();">
+<button type=button onclick="go();" class="btn btn-primary">add

@@ -1,9 +1,11 @@
-<ul class=keys>
-    $forall apiKey <- apiKeys
-        $with key <- apiKeyKey apiKey
-            <li id="key-#{key}" data-key=@{FeedKeyR feedId key}>
-                #{key}
-                <button type=button onclick="deleteApiKey('#{key}');">
+<p><strong>You'll need to use one of these keys to add values to this feed,
 
-    <li #add-api-key>
-        <button type=button onclick="newApiKey();">New key
+<ul .keys>
+  $forall apiKey <- apiKeys
+    $with key <- apiKeyKey apiKey
+      <li .key id="key-#{key}" data-key=@{FeedKeyR feedId key}>
+        #{key}
+        <button type=button onclick="deleteApiKey('#{key}');" .btn .btn-danger .btn-small>delete
+
+  <li #add-api-key>
+    <button type=button onclick="newApiKey();" .btn .btn-primary .btn-small>new key
