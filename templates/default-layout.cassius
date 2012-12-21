@@ -4,3 +4,4 @@ body
 div.container
   background-color: #ffffff
   padding: 5em
+  border-radius: 3em
