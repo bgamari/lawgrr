@@ -1,0 +1,36 @@
+<h2>Adding values
+<div .tabbable>
+    <ul class="nav nav-tabs">
+        <li class="active">
+            <a href="#tab-overview" data-toggle="tab">Overview
+        <li>
+            <a href="#tab-curl" data-toggle="tab">Curl
+        <li>
+            <a href="#tab-arduino" data-toggle="tab">Arduino
+        <li>
+            <a href="#tab-manual" data-toggle="tab">Manual
+
+    <div #tab-overview .tab-pane .active>
+        <p>
+            There are many ways you can add values to this
+            feed. See the tabs above for details on these options
+
+    <div #tab-curl .tab-pane>
+         <p>
+            <a href=http://curl.haxx.se/>Curl</a> is a command-line
+            tool commonly found in Unix environments capable of
+            forming HTTP requests. To submit a value to this feed with
+            <code>curl</code>, you'll first need an
+            <a href="#keys">API key</a> which you can create on this
+            page. Given a key, you can submit a value (say
+            <code>3.14</code>) with the following command,
+        <code>
+            curl @{FeedPointsR feedId} -d "key=$KEY" -d "value=3.14"
+
+    <div #tab-arduino .tab-pane>
+
+    <div #tab-manual .tab-pane>
+         <p>
+            You can manually add values with the form below,
+         <input #value type=number>
+         <button #add-value type=button onclick="go();" .btn .btn-primary>add

@@ -1,0 +1,8 @@
+function add_value() {
+    jQuery.ajax("@{FeedPointsR feedId}",
+                               { data: "value="+$("#value")[0].valueAsNumber
+                               , type: "POST"
+                               });
+};
+
+$("#add-value").on("click", add_value);

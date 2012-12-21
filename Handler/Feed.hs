@@ -97,6 +97,7 @@ getFeedR feedId = do
         Keys
         ^{apiKeysWidget feedId (map entityVal apiKeys)}
 |]
+        $(widgetFile "adding-values")
 
 deleteFeedR :: FeedId -> Handler RepHtml
 deleteFeedR feedId = do

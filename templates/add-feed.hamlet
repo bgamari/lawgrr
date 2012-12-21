@@ -1,0 +1,12 @@
+<div #add-feed-container>
+  <h3>Add a new feed
+  <div .required>
+    <label for=name>Name
+    <input type=text #name name=name required value>
+  <div .required>
+    <label for=description>Description
+    <textarea #description name=description edit_id="eta 0">
+  <div .required>
+    <label for=units>Measured in
+    <input type=text #units name=units required value>
+  <button #new-feed type=button .btn .btn-primary>New feed

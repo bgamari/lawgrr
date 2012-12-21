@@ -1,0 +1,6 @@
+body
+  background-color: #eeeeee
+
+div.container
+  background-color: #ffffff
+  padding: 5em

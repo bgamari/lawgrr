@@ -1,4 +1,5 @@
-<p><strong>You'll need to use one of these keys to add values to this feed,
+<p>
+  <strong>You'll need to use one of these keys to add values to this feed,
 
 <ul .keys>
   $forall apiKey <- apiKeys

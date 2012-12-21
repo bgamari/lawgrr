@@ -1,0 +1,13 @@
+function add_feed() {
+  jQuery.ajax("@{FeedsR}", { type: "POST"
+                           , data: { name: $("#name")[0].value
+                                   , description: $("#description")[0].value
+                                   , units: $("#units")[0].value
+                                   , dataType: "html"
+                                   }
+                           , success: function(data, textStatus, jqXHR) {
+                             }
+                           });
+}
+
+$("#new-feed").on("click", add_feed);

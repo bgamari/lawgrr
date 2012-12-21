@@ -2,28 +2,20 @@
     <a href="@{FeedR feedId}">#{feedName feed}
 <a href="@{FeedsR}">Back to feeds
 
-<p><strong>
+<p>
   $maybe (time,value) <- lastUpdate
-    This feed was last updated #{time} when it was
-    <span>#{value}
+    <strong>
+      This feed was last updated #{time} when it was
+      <span>#{value} #{feedUnits feed}
   $nothing
-    This feed has never been updated
+    <strong>
+      This feed has never been updated
 
-<p><strong>Here is the history of this feed
+<p>
+  <strong>Here is the history of this feed
 
 <div #plot-container>
 
-<p><strong>Measured in #{feedUnits feed}
-
-<script>
-    function go() {
-        jQuery.ajax("@{FeedPointsR feedId}",
-                                   { data: "value="+$("#value")[0].valueAsNumber
-                                   , type: "POST"
-                                   });
-    };
-
-<h3>Manually add a value
-<input #value type=number>
-<button type=button onclick="go();" .btn .btn-primary>add
+<p>
+  <strong>Measured in #{feedUnits feed}
 
