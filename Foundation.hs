@@ -11,14 +11,14 @@ import Yesod.Default.Util (addStaticContentExternal)
 import Network.HTTP.Conduit (Manager)
 import qualified Settings
 import Settings.Development (development)
-import qualified Database.Persist.Store
+import qualified Database.Persist
+import Database.Persist.Sql (SqlPersistT)
 import Settings.StaticFiles
-import Database.Persist.GenericSql
 import Settings (widgetFile, Extra (..))
 import Model
 import Text.Jasmine (minifym)
-import Web.ClientSession (getKey)
 import Text.Hamlet (hamletFile)
+import System.Log.FastLogger (Logger)
 
 -- | The site argument for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -27,9 +27,10 @@ import Text.Hamlet (hamletFile)
 data App = App
     { settings :: AppConfig DefaultEnv Extra
     , getStatic :: Static -- ^ Settings for static file serving.
-    , connPool :: Database.Persist.Store.PersistConfigPool Settings.PersistConfig -- ^ Database connection pool.
+    , connPool :: Database.Persist.PersistConfigPool Settings.PersistConf -- ^ Database connection pool.
     , httpManager :: Manager
-    , persistConfig :: Settings.PersistConfig
+    , persistConfig :: Settings.PersistConf
+    , appLogger :: Logger
     }
 
 -- Set up i18n messages. See the message folder.
@@ -56,7 +57,7 @@ mkMessage "App" "messages" "en"
 -- split these actions into two functions and place them in separate files.
 mkYesodData "App" $(parseRoutesFile "config/routes")
 
-type Form x = Html -> MForm App App (FormResult x, Widget)
+type Form x = Html -> MForm (HandlerT App IO) (FormResult x, Widget)
 
 -- Please see the documentation for the Yesod typeclass. There are a number
 -- of settings which can be configured by overriding methods here.
@@ -65,9 +66,9 @@ instance Yesod App where
 
     -- Store session data on the client in encrypted cookies,
     -- default session idle timeout is 120 minutes
-    makeSessionBackend _ = do
-        key <- getKey "config/client_session_key.aes"
-        return . Just $ clientSessionBackend key 120
+    makeSessionBackend _ = fmap Just $ defaultClientSessionBackend
+        (120 * 60) -- 120 minutes
+        "config/client_session_key.aes"
 
     defaultLayout widget = do
         master <- getYesod
@@ -80,8 +81,10 @@ instance Yesod App where
         -- you to use normal widget features in default-layout.
 
         pc <- widgetToPageContent $ do
-            $(widgetFile "normalize")
-            addStylesheet $ StaticR css_bootstrap_css
+            $(combineStylesheets 'StaticR
+                [ css_normalize_css
+                , css_bootstrap_css
+                ])
             addScript $ StaticR js_jquery_js
             addScript $ StaticR js_bootstrap_js
             $(widgetFile "default-layout")
@@ -100,7 +103,13 @@ instance Yesod App where
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
     -- users receiving stale content.
-    addStaticContent = addStaticContentExternal minifym base64md5 Settings.staticDir (StaticR . flip StaticRoute [])
+    addStaticContent =
+        addStaticContentExternal minifym genFileName Settings.staticDir (StaticR . flip StaticRoute [])
+      where
+        -- Generate a unique filename based on the content itself
+        genFileName lbs
+            | development = "autogen-" ++ base64md5 lbs
+            | otherwise   = base64md5 lbs
 
     -- Place Javascript at bottom of the body tag so the rest of the page loads first
     jsLoader _ = BottomOfBody
@@ -110,15 +119,14 @@ instance Yesod App where
     shouldLog _ _source level =
         development || level == LevelWarn || level == LevelError
 
+    makeLogger = return . appLogger
+
 -- How to run database actions.
 instance YesodPersist App where
-    type YesodPersistBackend App = SqlPersist
-    runDB f = do
-        master <- getYesod
-        Database.Persist.Store.runPool
-            (persistConfig master)
-            f
-            (connPool master)
+    type YesodPersistBackend App = SqlPersistT
+    runDB = defaultRunDB persistConfig connPool
+instance YesodPersistRunner App where
+    getDBRunner = defaultGetDBRunner connPool
 
 instance YesodAuth App where
     type AuthId App = UserId
@@ -136,7 +144,7 @@ instance YesodAuth App where
                 fmap Just $ insert $ User (credsIdent creds) Nothing
 
     -- You can add other plugins like BrowserID, email or OAuth here
-    authPlugins _ = [authBrowserId, authGoogleEmail]
+    authPlugins _ = [authBrowserId def, authGoogleEmail]
 
     authHttpManager = httpManager
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE TupleSections, OverloadedStrings #-}
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, PatternGuards #-}
 module Handler.Feed where
 
 import           Control.Error
@@ -31,7 +31,7 @@ humanFeedLastUpdate feedId = do
         Just (time, value) -> do time' <- liftIO $ humanReadableTime time
                                  return $ Just (time', value)
 
-getFeedsR :: Handler RepHtml
+getFeedsR :: Handler Html
 getFeedsR = do
     feeds <- runDB $ selectList [] []
     (widget, enctype) <- generateFormPost feedForm
@@ -63,7 +63,7 @@ feedForm = renderDivs $ Feed
     <*> areq htmlField "Description" Nothing
     <*> areq textField "Units" Nothing
 
-getFeedAddR :: Handler RepHtml
+getFeedAddR :: Handler Html
 getFeedAddR = do
     (widget, enctype) <- generateFormPost feedForm
     defaultLayout [whamlet|
@@ -72,7 +72,7 @@ getFeedAddR = do
     <input type=submit>
 |]
 
-postFeedAddR :: Handler RepHtml
+postFeedAddR :: Handler Html
 postFeedAddR = do
     ((result,widget), enctype) <- runFormPost feedForm
     case result of
@@ -81,13 +81,13 @@ postFeedAddR = do
             getFeedR feedId
         otherwise -> defaultLayout [whamlet|Done|]
 
-getFeedR :: FeedId -> Handler RepHtml
+getFeedR :: FeedId -> Handler Html
 getFeedR feedId = do
     feed <- runDB $ get404 feedId
     lastUpdate <- humanFeedLastUpdate feedId
     apiKeys <- runDB $ selectList [ ApiKeyFeedId ==. feedId ] []
     defaultLayout $ do
-        aDomId <- lift newIdent
+        aDomId <- newIdent
         setTitle $ toHtml $ "Feed: "<>Import.feedName feed
         addScript $ StaticR js_d3_js
         $(widgetFile "feed")
@@ -99,7 +99,7 @@ getFeedR feedId = do
 |]
         $(widgetFile "adding-values")
 
-deleteFeedR :: FeedId -> Handler RepHtml
+deleteFeedR :: FeedId -> Handler Html
 deleteFeedR feedId = do
     runDB $ get404 feedId >> delete feedId
     defaultLayout [whamlet|done|]
@@ -141,7 +141,7 @@ encodeDate =
     T.pack . formatTime defaultTimeLocale fmt
     where fmt = iso8601DateFormat (Just "%H:%M:%S%Q%Z")
 
-getFeedPointsR :: FeedId -> Handler RepJsonCsv
+getFeedPointsR :: FeedId -> Handler TypedContent
 getFeedPointsR feedId = do
     feed <- runDB $ get404 feedId
     period <- parseParam "Couldn't parse period" "period" readMay :: Handler Double
@@ -166,22 +166,13 @@ getFeedPointsR feedId = do
         csvHeader = V.fromList
                     $ map encodeUtf8 --[ "time", feedName feed<>" ("<>feedUnits feed<>")" ]
                       [ "time", "value"]
-        csv = V.fromList points
-    csvJson json csvHeader csv
+    selectRep $ do
+        provideJson json
+        provideRep $ returnCsv csvHeader (V.fromList points)
 
 instance Csv.ToNamedRecord DataPoint where
     toNamedRecord p = Csv.namedRecord
         [ "time" Csv..= encodeDate (dataPointTime p)
         , "value" Csv..= dataPointValue p
         ]
-
-data RepJsonCsv = RepJsonCsv RepJson RepCsv
-instance HasReps RepJsonCsv where
-    chooseRep (RepJsonCsv (RepJson j) (RepCsv c)) =
-        chooseRep [ (typeCsv, c), (typeJson, j) ]
-
-csvJson json csvHeader csv = do
-    json' <- jsonToRepJson json
-    csv' <- csvToRepCsv csvHeader csv
-    return $ RepJsonCsv json' csv'
 

@@ -11,7 +11,7 @@ import           Numeric (showHex)
 apiKeysWidget :: FeedId -> [ApiKey] -> Widget
 apiKeysWidget feedId apiKeys = $(widgetFile "api-keys")
     
-postFeedKeysR :: FeedId -> Handler RepHtmlJson
+postFeedKeysR :: FeedId -> Handler TypedContent
 postFeedKeysR feedId = do
     feed <- runDB $ get404 feedId
     key <- liftIO $ (\x->T.pack $ showHex x "")
@@ -19,12 +19,12 @@ postFeedKeysR feedId = do
     runDB $ insert $ ApiKey feedId key
     apiKeys <- runDB $ selectList [ ApiKeyFeedId ==. feedId ] []
     let widget = apiKeysWidget feedId (map entityVal apiKeys)
-        json = object [ "key" .= key ]
-    defaultLayoutJson widget json
+    selectRep $ do 
+        provideRep $ defaultLayout $ return ()
+        provideRep $ return $ object [ "key" .= key ]
 
-deleteFeedKeyR :: FeedId -> Text -> Handler RepHtml
+deleteFeedKeyR :: FeedId -> Text -> Handler Html
 deleteFeedKeyR feedId apiKey = do
     let key = UniqueApiKey feedId apiKey
     runDB $ getBy404 key >> deleteBy key
     defaultLayout $ return ()
-
